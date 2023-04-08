@@ -1,0 +1,29 @@
+\section{开始实验}
+\zhlipsum[2]\cite{HPC}
+
+\begin{lstlisting}[caption = cs代码表测试]
+	import keras
+	from keras import layers
+	
+	def train_model(maxword, maxlen):
+	model = keras.Sequential()
+	
+	# 前面数据需要的“词向量化”的操作，不算双向RNN的要求：
+	model.add( layers.Embedding(maxword, 50, input_length=maxlen) )
+	
+	# 双向RNN搭建：
+	model.add( layers.Bidirectional( layers.LSTM(64, dropout = 0.2, recurrent_dropout = 0.5) ) )
+	
+	# 外接一个单独的dropout层：非必须
+	model.add( layers.Dropout(0.2) )
+	
+	# 进入全连接层：二分类，1个神经元就够
+	model.add( layers.Dense(1, activation='sigmoid') )
+	
+	# 网络编译也在这个函数内完成：内容没变化
+	model.compile( optimizer='adam',
+	loss = 'binary_crossentropy',
+	metrics = ['acc']
+	) 
+	return model
+\end{lstlisting}
