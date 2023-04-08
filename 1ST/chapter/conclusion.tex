@@ -58,38 +58,38 @@ label = train_label.unsqueeze(-1)
 
 如Listing 7所示, 由于手写数字是稀疏矩阵, 我们通过对其添加随机噪声以保证构造的kd-树是好的(不加噪声会导致数据都分布在一个节点上). 
 这里, 我们添加$U(0,10)$的均匀整数噪声.
-\begin{lstlisting}
+\begin{lstlisting}[caption = 构造kd-树]
 model = KDTree()
 tree = model.create(
-    data=data[:10000],
-    label=label[:10000]
+    data=data[:30000],
+    label=label[:30000]
 )
 \end{lstlisting}
 
-如Listing 8所示, 我们使用前$10,000$条数据构造kd-树. 我们选取第$20,000$条数据进行预测, 图1展示了预测结果和真实结果.
+如Listing 8所示, 我们使用前$30,000$条数据构造kd-树. 我们选取第$40,000$条数据进行预测, 图1展示了预测结果和真实结果.
 \begin{figure}[htpb]
     \centering
     \subfigure[真实值]{
 		\includegraphics[width=0.48\linewidth]{figure/mnist_rel.png}}
-	\subfigure[预测值]{
+	\subfigure[搜索得到的最近值]{
 		\includegraphics[width=0.48\linewidth]{figure/mnist_pre.png}}
     \caption{kd-树搜索结果.}
     \label{figure1}
 \end{figure}
 
-同时, 我们还使用后$10,000$条数据作为测试集进行测试(listings 9), 得到了$90.38\%$的准确率. 结果表明, 我们的算法实现准确且高效.
-\begin{lstlisting}
-k = 10000
+同时, 我们还使用后$30,000$条数据作为测试集进行测试(listing 9), 得到了$90.38\%$的准确率. 结果表明, 我们的算法实现准确.
+\begin{lstlisting}[caption = 使用kd-树分类测试数据]
+k = 30000
 acc = 0
-data_test = data[-10000:]
-label_test = label[-10000:]
-for i in range(10000):
+data_test = data[-k:]
+label_test = label[-k:]
+for i in range(k):
     data_rel = data_test[i]
     label_rel = label_test[i]
     data_pre,label_pre = model.search(data_rel)
     if label_pre == label_rel:
         acc += 1
-acc /= 10000
+acc /= k
 \end{lstlisting}
 
 所有实验结果和运行效率以源码为准: \\
