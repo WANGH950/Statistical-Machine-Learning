@@ -1,0 +1,8 @@
+\contentsline {section}{\numberline {1}实验代码}{1}{}%
+\contentsline {subsection}{\numberline {1.1}感知机学习算法}{1}{}%
+\contentsline {subsection}{\numberline {1.2}k-近邻算法}{3}{}%
+\contentsline {section}{\numberline {2}实验结果分析}{6}{}%
+\contentsline {subsection}{\numberline {2.1}感知机学习算法结果分析}{7}{}%
+\contentsline {subsection}{\numberline {2.2}k-近邻算法结果分析}{7}{}%
+\contentsline {section}{\numberline {A}串行部分全部实验结果}{8}{}%
+\contentsline {section}{\numberline {B}并行部分全部实验结果}{8}{}%

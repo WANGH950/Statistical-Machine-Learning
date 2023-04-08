@@ -1,0 +1,15 @@
+\begin{abstract}
+    本文中, 我们实现了感知机的原型算法和对偶算法, 并完成了三点数据分类的题目. 同时, 我们使用对偶算法对MNIST数据集进行分类. 其中, 我们首先考虑将以$\{y:y=0,1,\cdots,9\}$为标签的多分类问题转化为以
+    \begin{equation*}
+        \hat{y} = \left\{\begin{aligned}
+            &1,\qquad &y < 5,\\
+            &-1,&y\geq 5.
+        \end{aligned}\right.
+    \end{equation*}
+    为标签的二分类问题, 之后应用对偶算法分类.
+    其次, 我们实现了k-近邻的kd-树的构造算法及搜索算法, 并在MNIST数据集上进行实验. 最后我们对实验结果进行了分析, 实验结果证明我们复现的算法是正确的, 并达到了预期效果.
+    本实验报告的所有内容开源:  
+\end{abstract}
+
+\textbf{关键词：} 感知机, k-近邻, kd-树, MNIST
+\newpage
