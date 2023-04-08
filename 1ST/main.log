@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.12.28)  9 APR 2023 02:50
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.12.28)  9 APR 2023 02:51
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -744,6 +744,10 @@ Package fontspec Info: Font family 'FangSong(0)' created for font 'FangSong'
 (fontspec)             <->"FangSong/OT:script=hani;language=dflt;"
 (fontspec)             - 'small caps'  (m/sc) with NFSS spec.: 
 
+
+Overfull \hbox (32.8318pt too wide) in paragraph at lines 8--12
+\TU/SimSun(0)/m/n/10.95 有 内 容 开 源\TU/TimesNewRoman(0)/m/n/10.95 : [][]$[][][][][] [] [] [] [][][][][][] [] [][][] [] [][][][][][][][] [] [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] []
+ []
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
