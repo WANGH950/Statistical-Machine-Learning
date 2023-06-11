@@ -6,6 +6,8 @@
 \usepackage{fancyhdr}
 \usepackage{lipsum}
 \usepackage{zhlipsum}
+\usepackage{array}
+% \newcolumntype{C}[1]{>{\centering}p{#1}}
 % \setmainfont{texgyrepagella-regular.otf} 
 \setmainfont{Times New Roman}
 \bibliographystyle{IEEEtran}
@@ -43,11 +45,11 @@
     \begin{center}
       \large
       \renewcommand\arraystretch{1.6}
-      \begin{tabular}{p{2cm}p{6cm}}
-        \bfseries{姓名：} & \@name   \\ \cline{2-2}
-        \bfseries{学院：} & \@college \\ \cline{2-2}
-        \bfseries{专业：} & \@major  \\ \cline{2-2}
-        \bfseries{学号：} & \@stuid  \\ \cline{2-2}
+      \begin{tabular}{p{2cm}<{\centering}p{6cm}<{\centering}}
+        \bfseries{姓名：} & {\centering \@name}   \\ \cline{2-2}
+        \bfseries{学院：} & {\centering \@college} \\ \cline{2-2}
+        \bfseries{专业：} & {\centering \@major}  \\ \cline{2-2}
+        \bfseries{学号：} & {\centering \@stuid}  \\ \cline{2-2}
       \end{tabular}
     \end{center}
     \vfill

@@ -1,29 +1,212 @@
-\section{开始实验}
-\zhlipsum[2]\cite{HPC}
+\section{实验代码}
 
-\begin{lstlisting}[caption = cs代码表测试]
-	import keras
-	from keras import layers
-	
-	def train_model(maxword, maxlen):
-	model = keras.Sequential()
-	
-	# 前面数据需要的“词向量化”的操作，不算双向RNN的要求：
-	model.add( layers.Embedding(maxword, 50, input_length=maxlen) )
-	
-	# 双向RNN搭建：
-	model.add( layers.Bidirectional( layers.LSTM(64, dropout = 0.2, recurrent_dropout = 0.5) ) )
-	
-	# 外接一个单独的dropout层：非必须
-	model.add( layers.Dropout(0.2) )
-	
-	# 进入全连接层：二分类，1个神经元就够
-	model.add( layers.Dense(1, activation='sigmoid') )
-	
-	# 网络编译也在这个函数内完成：内容没变化
-	model.compile( optimizer='adam',
-	loss = 'binary_crossentropy',
-	metrics = ['acc']
-	) 
-	return model
+\subsection{感知机学习算法}
+
+\begin{lstlisting}[caption = 感知机原型算法实现]
+class Perception():
+    def __init__(self, dim) -> None:
+        # 构造函数
+        # dim:   特征维度
+        # w:     权重
+        # b:     偏置项
+
+        self.dim = dim
+        self.w = np.zeros([dim])
+        self.b = 0
+    
+    def train(self, data_set, epoch, learning_rate):
+        # 训练模型
+
+        for i in range(epoch):
+            for (x,y) in data_set:
+                if self.predict(x)*y <= 0:
+                    self.w = self.w + learning_rate*x*y
+                    self.b = self.b + learning_rate*y
+            # 计算准确率
+            acc = self.accuracy(data_set)
+            print('epoch: ',i+1, 'accuracy: ', acc)
+            # 早停条件
+            if acc == 1:
+                break
+        print('Trining complete.')
+
+    def predict(self, x):
+        # 预测
+
+        return np.sign(np.dot(self.w,x) + self.b)
+    
+    def accuracy(self, data_set):
+        # 计算精度
+        
+        acc = 0
+        for (x,y) in data_set:
+            if self.predict(x)*y > 0:
+                acc += 1
+        return acc/len(data_set)
+\end{lstlisting}
+
+\begin{lstlisting}[caption = 感知机对偶算法实现]
+class PerceptionDual():
+    def __init__(self, data) -> None:
+        # 构造函数
+        # data:     训练数据
+        
+        self.data = data
+        self.N = len(data)
+        self.x = np.array([xx for (xx,_) in data])
+        self.y = np.array([yy for (_,yy) in data])
+        self.alpha = np.zeros([self.N])
+        self.b = 0
+    
+    def train(self, epoch, learning_rate):
+        # 训练模型
+        
+        for i in range(epoch):
+            for j in range(len(self.data)):
+                if self.predict(self.data[j][0])*self.data[j][1] <= 0:
+                    self.alpha[j] = self.alpha[j] + learning_rate
+                    self.b = self.b + learning_rate*self.data[j][1]
+            # 计算准确率
+            acc = self.accuracy(self.data)
+            print('epoch: ',i+1, 'accuracy: ', acc)
+            # 早停条件
+            if acc == 1:
+                break
+        print('Trining complete.')
+
+    def predict(self, x):
+        # 预测
+        return np.sign(np.dot(np.dot(self.x,x),self.alpha*self.y) + self.b)
+    
+    def accuracy(self, data_set):
+        # 计算精度
+
+        acc = 0
+        for (x,y) in data_set:
+            if self.predict(x)*y > 0:
+                acc += 1
+        return acc/len(data_set)
+\end{lstlisting}
+
+\subsection{k-近邻算法}
+
+\begin{lstlisting}[caption = kd-树构造算法和搜索算法实现]
+	class Node():
+    def __init__(self, value, data, label) -> None:
+        # 构造函数
+        # value:        节点的划分超平面参数
+        # data:         落在超平面上的数据点
+        # label:        落在超平面上的数据点对应的标签
+
+        self.value = value
+        self.data = data
+        self.label = label
+        self.left = None
+        self.right = None
+    
+    def set_left(self, node):
+        # 设置左子节点
+
+        if node != None:
+            self.left = node
+
+    def set_right(self, node):
+        # 设置右子节点
+
+        if node != None:
+            self.right = node
+
+class KDTree():
+    def __init__(self) -> None:
+        # 构造函数
+        # 用于存储KDTree，支持直接实例化对象时直接输入一个kd-树
+        self.root = None
+    
+    def create(self, data, label, j = 0):
+        # 递归构造平衡KD树
+
+        num, k = data.shape
+        if num == 0:
+            return None
+        else:
+            l = j % k
+            ind_sorted = np.argsort(data[:,l])
+            ind_median = ind_sorted[num//2]
+            value_ = int(np.median(data[ind_median,l]))
+            data_ = data[data[:,l]==value_]
+            label_ = label[data[:,l]==value_]
+            node = Node(
+                value=value_,
+                data=data_,
+                label=label_
+            )
+            node.set_left(
+                self.create(
+                    data=data[data[:,l]<value_],
+                    label=label[data[:,l]<value_],
+                    j=j+1
+                )
+            )
+            node.set_right(
+                self.create(
+                    data=data[data[:,l]>value_],
+                    label=label[data[:,l]>value_],
+                    j=j+1
+                )
+            )
+            if j == 0:
+                self.root = node
+            else:
+                return node
+    
+    def search(self, x, j = 0, node = None):
+        # 递归搜索KD树
+
+        if self.root == None:
+            print("You haven't created a KDTree yet.")
+            return None
+        if j == 0:
+            node = self.root
+        k = x.shape[0]
+        l = j % k
+        # 叶子节点停止条件
+        if self.is_leaf(node):
+            distance = np.linalg.norm(x-node.data,2,1)
+            index = np.argmin(distance)
+            return node.data[index], node.label[index]
+        else:
+            # 计算当前节点中的最近数据点
+            distance = np.linalg.norm(x-node.data,2,1)
+            min_distance = np.min(distance)
+            index = np.argmin(distance)
+            nearest = node.data[index]
+            label = node.label[index]
+            # 递归计算子节点的最近数据点，并比较
+            if x[l] < node.value and node.left != None:
+                nearest_, label_ = self.search(
+                    x = x,
+                    j = j+1,
+                    node = node.left
+                )
+                if np.linalg.norm(x-nearest_,2) < min_distance:
+                    nearest = nearest_
+                    label = label_
+            elif x[l] > node.value and node.right != None:
+                nearest_, label_ = self.search(
+                    x = x,
+                    j = j+1,
+                    node = node.right
+                )
+                if np.linalg.norm(x-nearest_,2) < min_distance:
+                    nearest = nearest_
+                    label = label_
+            return nearest, label
+
+    def is_leaf(self, node: Node):
+        # 判断是否是叶子节点
+        
+        if node.left != None or node.right != None:
+            return False
+        else:
+            return True
 \end{lstlisting}

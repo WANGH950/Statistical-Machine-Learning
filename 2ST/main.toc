@@ -1,0 +1,6 @@
+\contentsline {section}{\numberline {1}实验代码}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}感知机学习算法}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}k-近邻算法}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}实验结果分析}{6}{section.2}%
+\contentsline {subsection}{\numberline {2.1}感知机学习算法结果分析}{7}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}k-近邻算法结果分析}{8}{subsection.2.2}%
