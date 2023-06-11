@@ -4,3 +4,8 @@
 \contentsline {section}{\numberline {2}实验结果分析}{6}{section.2}%
 \contentsline {subsection}{\numberline {2.1}感知机学习算法结果分析}{7}{subsection.2.1}%
 \contentsline {subsection}{\numberline {2.2}k-近邻算法结果分析}{8}{subsection.2.2}%
+\contentsline {section}{\numberline {A}模型及算法源码}{10}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}朴素贝叶斯模型及其训练算法}{10}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Logistic模型及相应学习算法}{12}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}支持向量机}{13}{subsection.A.3}%
+\contentsline {subsection}{\numberline {A.4}全连接神经网络}{16}{subsection.A.4}%

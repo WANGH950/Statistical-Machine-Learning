@@ -1,6 +1,255 @@
-% \section{串行部分全部实验结果}
+\section{模型及算法源码}
 
-% 图或者代码放上来。
+\subsection{朴素贝叶斯模型及其训练算法}
+\begin{lstlisting}[caption = 朴素贝叶斯模型及其训练算法实现]
+# 定义模型
+class NaiveBayes(nn.Module):
+    def __init__(self, n, full_labels, S, lamb) -> None:
+        super(NaiveBayes,self).__init__()
+        # 归一化参数
+        self.max = None
+        self.min = None
+        self.n = n # 特征数量
+        self.full_labels = full_labels # 所有标签
+        self.K = len(full_labels) # 标签数量
+        self.lamb = lamb # 贝叶斯估计参数lambda
+        self.S = S # 每个特征分划区间数，这里默认都为S
+        self.cond_prob = torch.zeros([self.K,self.n,S]) # 条件概率
+        self.pre_prob = torch.zeros([self.K]) # 先验概率
+
+    def forward(self, features):
+        B,n = features.shape
+        assert n == self.n
+        post_prob = torch.ones([B,1])*self.pre_prob
+        # 归一化
+        features = (features - self.min) / (self.max - self.min) * 2 - 1
+        delta_x = 2 / (self.S - 2)
+        for i in range(B):
+            for j in range(self.K):
+                for k in range(n):
+                    # (-\infty,-1)和(1,\infty)的概率
+                    if features[i,k] < -1: post_prob[i,j] *= self.cond_prob[j,k,0]
+                    elif features[i,k] >= 1: post_prob[i,j] *= self.cond_prob[j,k,-1]
+                    else:
+                        for h in range(self.S-2):
+                            l = -1 + h * delta_x
+                            r = l + delta_x
+                            if features[i,k] >= l and features[i,k] < r:
+                                post_prob[i,j] *= self.cond_prob[j,k,h+1]
+                                break
+        return self.full_labels[torch.argmax(post_prob,dim=1)]
+
+    def fit(self, train_data):
+        # 计算先验概率
+        N,_ = train_data.shape
+        self.max = torch.max(train_data[:,:-1],dim=0).values
+        self.min = torch.min(train_data[:,:-1],dim=0).values
+        train_data[:,:-1] = (train_data[:,:-1] - self.min) / (self.max - self.min) * 2 - 1
+        features = train_data[:,:-1] # 特征
+        labels = train_data[:,-1:].int() # 标签
+        delta_x = 2 / (self.S - 2)
+        for i in range(self.K):
+            labels_i = labels == self.full_labels[i]
+            self.pre_prob[i] = (labels_i.sum() + self.lamb) / (N + self.K*self.lamb)
+            for j in range(self.n):
+                self.cond_prob[i,j,0] = 1 / self.S
+                for k in range(self.S-1):
+                    l = -1 + k * delta_x
+                    r = l + delta_x
+                    features_ij = features[labels_i[:,0],j]
+                    features_ijk = features_ij[(features_ij>=l)*(features_ij<r)]
+                    self.cond_prob[i,j,k+1] = (features_ijk.shape[0] + self.lamb) / (labels_i.sum() + self.S*self.lamb)
+        return self.pre_prob, self.cond_prob
+\end{lstlisting}
+
+\subsection{Logistic模型及相应学习算法}
+\begin{lstlisting}[caption={逻辑斯谛回归模型及损失函数和训练方法}]
+# 定义模型
+class Logistic(nn.Module):
+    def __init__(self,feature_num,class_num) -> None:
+        super(Logistic,self).__init__()
+        self.feature_num = feature_num
+        self.class_num = class_num
+        self.linear = nn.Sequential(
+            nn.BatchNorm1d(feature_num), # 批量归一化
+            nn.Linear(feature_num,class_num-1,bias=False)
+        )
+
+    def forward(self, x):
+        B,d = x.shape
+        assert d == self.feature_num and B > 0
+        y = torch.cat([torch.exp(self.linear(x)),torch.ones([B,1])],dim=1)
+        y = y / torch.sum(y,dim=1,keepdim=True)
+        return y
+    
+# 负对数似然损失函数
+class NLLLoss(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def forward(self,y_pre,y_rel):
+        assert y_pre.shape == y_rel.shape
+        loss = -torch.log(y_pre)*y_rel
+        return torch.sum(loss)
+
+# 定义模型训练函数
+def train(model, data_set, batch_size, epoch = 1000, learning_rate = 1e-3):
+    N,_ = data_set.shape
+    criterion = NLLLoss()
+    optim = torch.optim.SGD(model.parameters(),learning_rate,momentum=0) # 动量设置为0
+    
+    start = time.time()
+    loss_values = torch.zeros(epoch)
+    for i in range(epoch):
+        model.train()
+        optim.zero_grad()
+        index = torch.randint(0,N,[batch_size]) # 随机选取batch条数据
+        data_i = data_set[index,:]
+        x_i = data_i[:,:-1].to(torch.float32)
+        y_i = nn.functional.one_hot(data_i[:,-1].to(torch.int64),num_classes=model.class_num)
+        outputs = model(x_i)
+        loss = criterion(outputs,y_i)
+        loss.backward()
+        optim.step()
+
+        model.eval()
+        loss_values[i] = loss.item()
+
+        print('\r%5d/{}|{}{}|{:.2f}s  [Loss: %e]'.format(
+            epoch,
+            "#"*int((i+1)/epoch*50),
+            " "*(50-int((i+1)/epoch*50)),
+            time.time() - start) %
+            (i+1,
+            loss_values[i]), end = ' ', flush=True)
+    print("\nTraining has been completed.")
+    return loss_values
+\end{lstlisting}
+
+\subsection{支持向量机}
+
+\begin{lstlisting}[caption={线性支持向量机}]
+# 定义模型
+class SVMLinear(nn.Module):
+    def __init__(self,feature_num) -> None:
+        super(SVMLinear,self).__init__()
+        self.feature_num = feature_num
+        self.batch_norm = nn.BatchNorm1d(feature_num) # 特征批量归一化，学习归一化参数
+        self.linear = nn.Linear(feature_num,1)
+    
+    def forward(self, x, signed = True):
+        B,d = x.shape
+        assert B > 0 and d == self.feature_num
+        normed = self.batch_norm(x)
+        outputs = self.linear(normed)
+        if signed:
+            return torch.sign(outputs)
+        else:
+            return outputs
+
+# 合页损失函数
+class HingeLoss(nn.Module):
+    def __init__(self,lamb) -> None:
+        super(HingeLoss,self).__init__()
+        self.lamb = lamb
+
+    def forward(self,res_pre_linear_values,res_rel,parameters):
+        return torch.sum(torch.relu(1 - res_rel*res_pre_linear_values)) + self.lamb*torch.norm(parameters)**2
+
+# 定义训练函数
+def train_svm(model, data_set, batch_size, lamb=1, epoch = 1000, learning_rate = 1e-3):
+    N,_ = data_set.shape
+    criterion = HingeLoss(lamb)
+    optim = torch.optim.SGD(model.parameters(),learning_rate,momentum=0) # 动量设置为0
+    
+    start = time.time()
+    loss_values = torch.zeros(epoch)
+    for i in range(epoch):
+        model.train()
+        optim.zero_grad()
+        index = torch.randint(0,N,[batch_size]) # 随机选取batch条数据
+        data_i = data_set[index,:]
+        x_i = data_i[:,:-1].to(torch.float32)
+        y_i = data_i[:,-1:].to(torch.int32)
+        outputs = model(x_i,signed=False)
+        loss = criterion(outputs,y_i,model.linear.weight)
+        loss.backward()
+        optim.step()
+
+        model.eval()
+        loss_values[i] = loss.item()
+
+        print('\r%5d/{}|{}{}|{:.2f}s  [Loss: %e]'.format(
+            epoch,
+            "#"*int((i+1)/epoch*50),
+            " "*(50-int((i+1)/epoch*50)),
+            time.time() - start) %
+            (i+1,
+            loss_values[i]), end = ' ', flush=True)
+    print("\nTraining has been completed.")
+    return loss_values
+\end{lstlisting}
+
+\begin{lstlisting}[caption={非线性支持向量机}]
+# 高斯核非线性SVM
+class SVMNonLinear(nn.Module):
+    def __init__(self,feature_num,kernel_data) -> None:
+        super(SVMNonLinear,self).__init__()
+        self.feature_num = feature_num
+        self.kernel_features = kernel_data[:,:-1].to(torch.float32)
+        self.kernel_labels = kernel_data[:,-1].to(torch.int32)
+        self.batch_norm = nn.BatchNorm1d(feature_num)
+        self.linear = nn.Linear(feature_num+kernel_data.shape[0],1)
+        self.kernel_params = nn.Parameter(torch.rand(1)+5,requires_grad=True) # 核函数标准差
+    
+    def forward(self, x, signed = True):
+        B,d = x.shape
+        assert B > 0 and d == self.feature_num
+        # 归一化特征
+        normed_data = self.batch_norm(x)
+        normed_kernel_data = self.batch_norm(self.kernel_features)
+        kernel_features = torch.exp(-torch.mm(normed_data,normed_kernel_data.T) / self.kernel_params**2) * self.kernel_labels
+        outputs = self.linear(torch.cat([normed_data,kernel_features],dim=1)) # 核方法特征和原特征结合
+        if signed:
+            return torch.sign(outputs)
+        else:
+            return outputs
+\end{lstlisting}
+
+\subsection{全连接神经网络}
+\begin{lstlisting}[caption={全连接神经网络模型实现}]
+class MLP(nn.Module):
+def __init__(self,feature_num,class_num,hidden_dim=20,layer_num=2) -> None:
+    super(MLP,self).__init__()
+    self.feature_num = feature_num
+    self.class_num = class_num
+    self.hidden_dim = hidden_dim
+    self.layer_num = layer_num
+    self.model = nn.Sequential(
+        OrderedDict(
+            [("input_layer",
+                nn.Sequential(
+                    nn.BatchNorm1d(feature_num),
+                    nn.Linear(feature_num,hidden_dim),
+                    nn.Tanh()
+                ))] + 
+            [("hidden_layer_"+str(i+1),
+                nn.Sequential(
+                    nn.Linear(hidden_dim,hidden_dim),
+                    nn.Tanh()
+                )) for i in range(layer_num-1)] + 
+            [("output_layer",
+                nn.Sequential(
+                    nn.Linear(hidden_dim,class_num),
+                    nn.Softmax(dim=1)
+                ))]
+        )
+    )
+
+# 前向传播
+def forward(self,x):
+    return self.model(x)
+\end{lstlisting}
 
 % \section{并行部分全部实验结果}
 
