@@ -7,6 +7,7 @@
 \usepackage{lipsum}
 \usepackage{zhlipsum}
 \usepackage{array}
+
 % \newcolumntype{C}[1]{>{\centering}p{#1}}
 % \setmainfont{texgyrepagella-regular.otf} 
 \setmainfont{Times New Roman}

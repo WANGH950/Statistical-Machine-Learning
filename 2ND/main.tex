@@ -5,9 +5,20 @@
 \usepackage[dvipsnames]{xcolor}  % 更全的色系
 \usepackage{listings}  % 排代码用的宏包
 \usepackage{hyperref}
-\usepackage{graphicx}  %插入图片的宏包
-\usepackage{float}  %设置图片浮动位置的宏包
-\usepackage{subfigure}  %插入多图时用子图显示的宏包
+\usepackage{graphicx}  % 插入图片的宏包
+\usepackage{float}  % 设置图片浮动位置的宏包
+\usepackage{subfigure}  % 插入多图时用子图显示的宏包
+\usepackage{tikz}
+\tikzstyle{inputNode}=[draw,circle,minimum size=25pt,inner sep=0pt]
+\tikzset{
+  rect/.style = {
+    shape = rectangle,
+    text width = 2cm,
+    align = center,
+    minimum height = 1cm,
+  }
+}
+\tikzstyle{mlp1}=[rectangle, draw, minimum width=2cm]
 \hypersetup{hidelinks,
 	colorlinks=true,
 	allcolors=black,
